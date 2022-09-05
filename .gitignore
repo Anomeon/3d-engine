@@ -7,7 +7,7 @@
 /coverage
 
 # production
-/build
+/dist
 
 # misc
 .DS_Store
@@ -15,6 +15,7 @@
 .vscode
 /.idea
 .eslintcache
+.parcel-cache
 
 npm-debug.log*
 

@@ -1,3 +1,7 @@
+import { a } from './engine';
+
+console.log(a);
+
 const canvas = document.querySelector('canvas');
 
 const ctx = canvas?.getContext('2d');
