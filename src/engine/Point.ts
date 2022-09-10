@@ -4,7 +4,7 @@ import { Vector } from './Vector';
 const drawer = new Drawer();
 
 export class Point {
-  constructor(private x: number, private y: number, private z: number) {
+  constructor(public x: number, public y: number, public z: number) {
   }
 
   addVectorToPoint(vector: Vector) {
@@ -24,11 +24,7 @@ export class Point {
   }
 
   draw() {
-    const size = this.z / 10;
-    const x = this.x - size / 2
-    const y = this.y - size / 2
-
-    drawer.draw(x, y, size, size);
+    drawer.draw(this.x, this.y, 1, 1);
   }
 
   setPointToPoint(point: Point) {
@@ -37,3 +33,6 @@ export class Point {
     this.z = point.z;
   }
 }
+
+// @ts-ignore
+window.Point = Point;

@@ -75,3 +75,6 @@ export class Vector {
     return new Vector(scaledMatrix[0], scaledMatrix[1], scaledMatrix[2])
   }
 }
+
+// @ts-ignore
+window.Vector = Vector;
