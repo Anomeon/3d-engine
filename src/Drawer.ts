@@ -8,6 +8,13 @@ export class Drawer {
   }
 
   draw(x: number, y: number, width: number, height: number) {
+
     Drawer.instance?.fillRect(x, y, width, height);
+  }
+
+  color(color: string) {
+    if (Drawer.instance) {
+      Drawer.instance.fillStyle = color;
+    }
   }
 }

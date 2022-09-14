@@ -5,127 +5,119 @@ import { Camera } from './engine/Camera';
 import { Line } from './engine/Line';
 import { Triangle } from './engine/Triangle';
 import { Polygon } from './engine/Polygon';
+import { MathExt } from './engine/MathExt';
 
 const canvas = document.querySelector('canvas');
 
 const ctx = canvas?.getContext('2d');
 
-const deep = 100;
-
-const point1 = new Point(1, 2, 1);
-const point2 = new Point(0, 4, 4);
-const vector1 = new Vector(2, 0, 0);
-const vector2 = point1.subtractPointFromPoint(point2);
-const vector3 = vector1.addVectorToVector(vector2);
-
-// Asserts
-console.log("point1.getDebugValue() === '1 2 1'", point1.getDebugValue() === '1 2 1');
-console.log("vector2.getDebugValue() === '1 -2 -3'", vector2.getDebugValue() === '1 -2 -3');
-console.log("vector3.getDebugValue() === '3 -2 -3'", vector3.getDebugValue() === '3 -2 -3');
-console.log("point1.addVectorToPoint(vector3).getDebugValue() === '4 0 -2'", point1.addVectorToPoint(vector3).getDebugValue() === '4 0 -2');
-console.log("point2.subtractVectorFromPoint(vector2).getDebugValue() === '-1 6 7'", point2.subtractVectorFromPoint(vector2).getDebugValue() === '-1 6 7');
-
-console.log("new Vector(3, 4, 5)).rotateXY(90).getDebugValue() === '-4 3 5'", (new Vector(3, 4, 5)).rotateXY(90).getDebugValue() === '-4 3 5')
-console.log("(new Vector(3, 4, 0)).scale(2, 1, 1).getDebugValue() === '6 4 0'", (new Vector(3, 4, 0)).scale(2, 1, 1).getDebugValue() === '6 4 0')
-
-const random = (min, max) => Math.random() * (max - min) + min;
-
 if (canvas && ctx) {
   ctx.fillStyle = '#fff';
 
   new Drawer(ctx);
-  const camera = new Camera(0, canvas?.width, 0, canvas?.height / 2, 0, deep);
+  const camera = new Camera(0, canvas?.width, 0, canvas?.height);
 
-  const getPoints = () => {
-    const points: Point[] = [];
-    for (let i = 0; i < 1000; i++) {
-      points.push(new Point(random(-200, canvas?.width + 200), random(-200, canvas?.height + 200), random(-200, deep + 200)));
-    }
+  const cameraRender = (timestamp) => {
 
-    return points;
-  }
-
-  let points = getPoints();
-
-
-  const allRender = () => {
+    const colors = [
+      'red',
+      'blue',
+      'green',
+      'yellow',
+      'white',
+      'pink',
+    ];
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    for (let i = 0; i < points.length; i++) {
-      points[i].draw();
+    const cube = [
+      // south
+      [0, 0, 0,   0, 1, 0,   1, 1, 0],
+      [0, 0, 0,   1, 1, 0,   1, 0, 0],
+
+      // // west
+      [0, 0, 1,   0, 1, 1,   0, 0, 0],
+      [0, 1, 1,   0, 1, 0,   0, 0, 0],
+
+    //   // top
+      [0, 1, 0,   0, 1, 1,   1, 1, 1],
+      [0, 1, 0,   1, 1, 1,   1, 1, 0],
+
+    //   // east
+      [1, 0, 0,   1, 1, 0,   1, 1, 1],
+      [1, 0, 0,   1, 1, 1,   1, 0, 1],
+
+    //   // north
+      [1, 0, 1,   1, 1, 1,   0, 0, 1],
+      [1, 1, 1,   0, 1, 1,   0, 0, 1],
+
+    //   // bottom
+      [0, 0, 1,   0, 0, 0,   1, 0, 1],
+      [0, 0, 0,   1, 0, 0,   1, 0, 1],
+    ];
+
+    // const cube = [
+    //   // south
+    //   [1, 1, 1,   1, 100, 1,   100, 100, 1],
+    //   [1, 1, 1,   100, 100, 1,   100, 1, 1],
+
+      // // west
+      // [50, 50, 100,   50, 100, 100,   50, 50, 50],
+      // [50, 100, 100,   50, 100, 50,   50, 50, 50],
+
+      // // top
+      // [50, 100, 50,   50, 100, 100,   100, 100, 100],
+      // [50, 100, 50,   100, 100, 100,   100, 100, 50],
+
+      // // east
+      // [100, 50, 50,   100, 100, 50,   100, 100, 100],
+      // [100, 50, 50,   100, 100, 100,   100, 50, 100],
+
+      // // north
+      // [100, 50, 100,   100, 100, 100,   50, 50, 100],
+      // [100, 100, 100,   50, 100, 100,   50, 50, 100],
+
+      // // bottom
+      // [50, 50, 100,   50, 50, 50,   100, 50, 100],
+      // [50, 50, 50,   100, 50, 50,   100, 50, 100],
+    // ];
+
+    for (let i = 0; i < cube.length; i++) {
+      const triangle = cube[i];
+
+      let v1 = new Vector(triangle[0], triangle[1], triangle[2]);
+      let v2 = new Vector(triangle[3], triangle[4], triangle[5]);
+      let v3 = new Vector(triangle[6], triangle[7], triangle[8]);
+
+      // Rotate
+      v1 = v1.rotateYZ(MathExt.round(timestamp / 15 % 360));
+      v2 = v2.rotateYZ(MathExt.round(timestamp / 15 % 360));
+      v3 = v3.rotateYZ(MathExt.round(timestamp / 15 % 360));
+
+      v1 = v1.rotateXY(MathExt.round(timestamp / 15 % 360));
+      v2 = v2.rotateXY(MathExt.round(timestamp / 15 % 360));
+      v3 = v3.rotateXY(MathExt.round(timestamp / 15 % 360));
+
+      v1 = v1.rotateXZ(MathExt.round(timestamp / 15 % 360));
+      v2 = v2.rotateXZ(MathExt.round(timestamp / 15 % 360));
+      v3 = v3.rotateXZ(MathExt.round(timestamp / 15 % 360));
+
+      // Add perspective
+      // Very affects how 3d objects looks like!
+      v1.z = v1.z + 3.5;
+      v2.z = v2.z + 3.5;
+      v3.z = v3.z + 3.5;
+
+      const projectedV1 = MathExt.multiplyVectorToMatrix(v1, camera.projectionMatrix);
+      const projectedV2 = MathExt.multiplyVectorToMatrix(v2, camera.projectionMatrix);
+      const projectedV3 = MathExt.multiplyVectorToMatrix(v3, camera.projectionMatrix);
+      const k = 450;
+      const x = 300;
+      const y = 200;
+      camera.drawScene((new Triangle(projectedV1.x * k + x, projectedV1.y * k + y, projectedV2.x * k + x, projectedV2.y * k + y, projectedV3.x * k + x, projectedV3.y * k + y, colors[Math.ceil(i / 2)]).getPoints()));
     }
+
+    requestAnimationFrame(cameraRender);
   }
 
-  const cameraRender = () => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const triangle = new Triangle(20, 10, 40, 50, 60, 10);
-    const polygon = new Polygon([20, 10, 40, 50, 100, 100, 60, 10])
-    console.log(polygon.getPoints());
-
-    camera.drawScene(polygon.getPoints());
-    // camera.drawScene(triangle.getPoints());
-    camera.drawScene(points);
-  }
-
-  let render = cameraRender;
-
-  document.body.addEventListener('keyup', (e) => {
-    if (e.code === 'Space') {
-      points = getPoints();
-      render();
-    }
-
-    if (e.code === 'BracketLeft') {
-      render = cameraRender;
-      render();
-    }
-
-    if (e.code === 'BracketRight') {
-      render = allRender;
-      render();
-    }
-
-    if (e.code === 'KeyA') {
-      const origin = new Point(canvas.width / 2, canvas.height / 2, deep / 2);
-
-      for (let i = 0; i < points.length; i++) {
-        const pointVector = points[i].subtractPointFromPoint(origin);
-        points[i].setPointToPoint(origin);
-        points[i] = points[i].addVectorToPoint(pointVector.scale(0.9, 0.9, 0.9));
-      }
-      render();
-    }
-    if (e.code === 'KeyS') {
-      const origin = new Point(canvas.width / 2, canvas.height / 2, deep / 2);
-
-      for (let i = 0; i < points.length; i++) {
-        const pointVector = points[i].subtractPointFromPoint(origin);
-        points[i].setPointToPoint(origin);
-        points[i] = points[i].addVectorToPoint(pointVector.scale(1.1, 1.1, 1.1));
-      }
-      render();
-    }
-    if (e.code === 'KeyR') {
-      const origin = new Point(canvas.width / 2, canvas.height / 2, deep / 2);
-
-      for (let i = 0; i < points.length; i++) {
-        const pointVector = points[i].subtractPointFromPoint(origin);
-        points[i].setPointToPoint(origin);
-        points[i] = points[i].addVectorToPoint(pointVector.rotateYZ(5));
-      }
-      render();
-    }
-    if (e.code === 'KeyE') {
-      const origin = new Point(canvas.width / 2, canvas.height / 2, deep / 2);
-
-      for (let i = 0; i < points.length; i++) {
-        const pointVector = points[i].subtractPointFromPoint(origin);
-        points[i].setPointToPoint(origin);
-        points[i] = points[i].addVectorToPoint(pointVector.rotateYZ(-5));
-      }
-      render();
-    }
-  });
-
-  render();
+  requestAnimationFrame(cameraRender);
 }

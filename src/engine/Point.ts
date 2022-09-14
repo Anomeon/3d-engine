@@ -4,7 +4,7 @@ import { Vector } from './Vector';
 const drawer = new Drawer();
 
 export class Point {
-  constructor(public x: number, public y: number, public z: number) {
+  constructor(public x: number, public y: number, public z: number, public color: string = '#fff') {
   }
 
   addVectorToPoint(vector: Vector) {
@@ -24,6 +24,7 @@ export class Point {
   }
 
   draw() {
+    drawer.color(this.color);
     drawer.draw(this.x, this.y, 1, 1);
   }
 
