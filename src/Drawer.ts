@@ -8,8 +8,8 @@ export class Drawer {
   }
 
   draw(x: number, y: number, width: number, height: number) {
-
-    Drawer.instance?.fillRect(x, y, width, height);
+    // TODO
+    Drawer.instance?.fillRect(x, 600 - y, width, height);
   }
 
   color(color: string) {

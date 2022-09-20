@@ -11,6 +11,30 @@ export class Vector {
     return new Vector(this.x - vector.x, this.y - vector.y, this.z - vector.z);
   }
 
+  crossProduct(vector: Vector) {
+    const x = this.y * vector.z - this.z * vector.y;
+    const y = this.z * vector.x - this.x * vector.z;
+    const z = this.x * vector.y - this.y * vector.x;
+    return new Vector(x, y, z);
+  }
+
+  dotProduct(vector: Vector) {
+    return this.x * vector.x + this.y * vector.y + this.z * vector.z;
+  }
+
+  unitVector() {
+    const length = this.length();
+
+    if (length === 0) {
+      return new Vector(0, 0, 0);
+    }
+    return new Vector(this.x / length, this.y / length, this.z / length);
+  }
+
+  length() {
+    return Math.sqrt(this.x**2 + this.y**2 + this.z**2);
+  }
+
   getDebugValue() {
     return `${this.x} ${this.y} ${this.z}`;
   }
