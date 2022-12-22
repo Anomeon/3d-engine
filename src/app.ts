@@ -6,12 +6,41 @@ import { Line } from './engine/Line';
 import { Triangle } from './engine/Triangle';
 import { Polygon } from './engine/Polygon';
 import { MathExt } from './engine/MathExt';
+import fs from 'fs';
+
+// @ts-ignore
+window.render = true;
+
+let SHIFT_FROM_Z;
+
+const readObjFile = () => {
+  // const sourceCode = fs.readFileSync(__dirname + '/models/boxes.obj', 'utf8');
+  // SHIFT_FROM_Z = 12;
+  // const sourceCode = fs.readFileSync(__dirname + '/models/cube.obj', 'utf8');
+  // SHIFT_FROM_Z = 3;
+  const sourceCode = fs.readFileSync(__dirname + '/models/spaceship.obj', 'utf8');
+  SHIFT_FROM_Z = 8;
+  const splitted: string[] = sourceCode.split('\n');
+  const points: RegExpMatchArray[][] = [];
+  const indexes: RegExpMatchArray[][] = [];
+
+  for (let i = 0; i < splitted.length; i++) {
+    if (splitted[i][0] === 'v') {
+      points.push([...splitted[i].matchAll(/-?[0-9]+\.?[0-9]*/g)]);
+    }
+    if (splitted[i][0] === 'f') {
+      indexes.push([...splitted[i].matchAll(/[0-9]+/g)]);
+    }
+  }
+
+  return { points, indexes };
+}
 
 const canvas = document.querySelector('canvas');
 
 const ctx = canvas?.getContext('2d');
 
-let cameraState = {x: 0, y: 0, z: 0, xy: 0, xz: 0, yz: 0, shift: false };
+let cameraState = {x: 0, y: 0, z: 0, xy: 0, xz: 0, yz: 0, shift: false, hasCameraEnabled: true };
 
 document.body.addEventListener('keydown', (e) => {
   if (e.code === 'ShiftLeft') {
@@ -20,14 +49,7 @@ document.body.addEventListener('keydown', (e) => {
   }
 });
 
-document.body.addEventListener('keyup', (e) => {
-  if (e.code === 'ShiftLeft') {
-
-    cameraState.shift = false;
-  }
-});
-
-document.body.addEventListener('mousemove', (e) => {
+const mouseMoveHandler = (e) => {
   if (cameraState.x < e.clientX) {
     cameraState.xy += 1 % 360;
   } else if (cameraState.x > e.clientX) {
@@ -51,6 +73,15 @@ document.body.addEventListener('mousemove', (e) => {
   }
 
   cameraState.x = e.clientX;
+};
+
+document.body.addEventListener('mousemove', mouseMoveHandler);
+
+document.querySelector('#run-render')?.addEventListener('click', () => {
+  window.render = true;
+});
+document.querySelector('#stop-render')?.addEventListener('click', () => {
+  window.render = false;
 });
 
 if (canvas && ctx) {
@@ -58,42 +89,19 @@ if (canvas && ctx) {
 
   new Drawer(ctx);
   const camera = new Camera(0, canvas?.width, 0, canvas?.height);
+  const { points, indexes } = readObjFile();
 
   const cameraRender = (timestamp) => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    let cube = Object.freeze([
-      // east
-      [[1, 0, 0],   [1, 1, 0],   [1, 1, 1], 'yellow', ],
-      [[1, 0, 0],   [1, 1, 1],   [1, 0, 1], 'yellow', ],
+    let vectors: Array<[Vector, Vector, Vector, number]> = [];
+    let dotProductForLight;
+    // Draw triangles
+    for (let i = 0; i < indexes.length; i++) {
 
-      // top
-      [[0, 1, 0],   [0, 1, 1],   [1, 1, 1], 'green', ],
-      [[0, 1, 0],   [1, 1, 1],   [1, 1, 0], 'green', ],
-
-      // north
-      [[1, 0, 1],   [1, 1, 1],   [0, 0, 1], 'white', ],
-      [[1, 1, 1],   [0, 1, 1],   [0, 0, 1], 'white', ],
-
-      // bottom
-      [[0, 0, 1],   [0, 0, 0],   [1, 0, 1], 'pink', ],
-      [[0, 0, 0],   [1, 0, 0],   [1, 0, 1], 'pink', ],
-
-      // south
-      [[0, 0, 0],   [0, 1, 0],   [1, 1, 0], 'red', ],
-      [[0, 0, 0],   [1, 1, 0],   [1, 0, 0], 'red', ],
-
-      // west
-      [[0, 0, 1],   [0, 1, 1],   [0, 0, 0], 'blue', ],
-      [[0, 1, 1],   [0, 1, 0],   [0, 0, 0], 'blue', ],
-    ]);
-
-    for (let i = 0; i < cube.length; i++) {
-      const coords: [number[], number[], number[], string] = cube[i] as [number[], number[], number[], string];
-
-      let v1 = new Vector(coords[0][0], coords[0][1], coords[0][2]);
-      let v2 = new Vector(coords[1][0], coords[1][1], coords[1][2]);
-      let v3 = new Vector(coords[2][0], coords[2][1], coords[2][2]);
+      let v1 = new Vector(+points[+indexes[i][0] - 1][0], +points[+indexes[i][0] - 1][1], +points[+indexes[i][0] - 1][2]);
+      let v2 = new Vector(+points[+indexes[i][1] - 1][0], +points[+indexes[i][1] - 1][1], +points[+indexes[i][1] - 1][2]);
+      let v3 = new Vector(+points[+indexes[i][2] - 1][0], +points[+indexes[i][2] - 1][1], +points[+indexes[i][2] - 1][2]);
 
       // Rotate on tick
       v1 = v1.rotateYZ(MathExt.round(timestamp / 15 % 360));
@@ -128,17 +136,10 @@ if (canvas && ctx) {
 
       // A bit change object points, to have centered by x, y perspective
       // And be outside object by z
-      v1.x = v1.x - 0.5;
-      v2.x = v2.x - 0.5;
-      v3.x = v3.x - 0.5;
 
-      v1.y = v1.y - 0.5;
-      v2.y = v2.y - 0.5;
-      v3.y = v3.y - 0.5;
-
-      v1.z = v1.z + 2.5;
-      v2.z = v2.z + 2.5;
-      v3.z = v3.z + 2.5;
+      v1.z = v1.z + SHIFT_FROM_Z;
+      v2.z = v2.z + SHIFT_FROM_Z;
+      v3.z = v3.z + SHIFT_FROM_Z;
 
       const diffV2V1 = v2.subtractVectorFromVector(v1);
       const diffV3V1 = v3.subtractVectorFromVector(v1);
@@ -146,27 +147,62 @@ if (canvas && ctx) {
 
       const unitNormal = normal.unitVector();
 
-      const lightDirectionNormal = new Vector(0, 0, -1).unitVector();
-      const dotProductForLight = unitNormal.dotProduct(lightDirectionNormal);
-
+      // Exclude from render internal side
       if (unitNormal.dotProduct(v1.subtractVectorFromVector(new Vector(camera.minX, camera.minY, camera.minZ))) < 0) {
+
+        const lightDirectionNormal = new Vector(0, 0, -1).unitVector();
+        dotProductForLight = unitNormal.dotProduct(lightDirectionNormal);
+
         const projectedV1 = MathExt.multiplyVectorToMatrix(v1, camera.projectionMatrix);
         const projectedV2 = MathExt.multiplyVectorToMatrix(v2, camera.projectionMatrix);
         const projectedV3 = MathExt.multiplyVectorToMatrix(v3, camera.projectionMatrix);
 
-        const k = 300;
-        const x = 400;
-        const y = 300;
-
-        // const lineColor = coords[3];
-        // const fillColor = i < 16 ? coords[3] : undefined;
-        const lineColor = `hsl(0, 0%, ${dotProductForLight * 100}%)`;
-        const fillColor = i < 16 && dotProductForLight > 0 ? `hsl(0, 0%, ${dotProductForLight * 100}%)` : undefined;
-        camera.drawScene((new Triangle(projectedV1.x * k + x, projectedV1.y * k + y, projectedV2.x * k + x, projectedV2.y * k + y, projectedV3.x * k + x, projectedV3.y * k + y, lineColor, fillColor).getPoints()));
+        vectors.push([projectedV1, projectedV2, projectedV3, dotProductForLight]);
       }
     }
+    vectors.sort((a, b) => { return (b[0].z + b[1].z + b[2].z) / 3 - (a[0].z + a[1].z + a[2].z) / 3})
+
+    for (let i = 0; i < vectors.length; i++) {
+      const kx = canvas.width * 0.5;
+      const ky = canvas.height * 0.5;
+      const x = 1;
+      const y = 1;
+
+      // const lineColor = coords[3];
+      // const fillColor = i < 16 ? coords[3] : undefined;
+
+      // const lineColor = `#fff`;
+      // const fillColor = `#fff`;
+
+      const lineColor = `hsl(0, 0%, ${vectors[i][3] * 100}%)`;
+      const fillColor = `hsl(0, 0%, ${vectors[i][3] * 100}%)`;
+      const triangle = new Triangle((vectors[i][0].x + x) * kx, (vectors[i][0].y + y) * ky, (vectors[i][1].x + x) * kx, (vectors[i][1].y + y) * ky, (vectors[i][2].x + x) * kx, (vectors[i][2].y + y) * ky, lineColor, fillColor);
+
+      camera.drawScene(triangle.getPoints());
+    }
+    if (window.render) {
+      requestAnimationFrame(cameraRender);
+    }
+  }
+
+  if (window.render) {
     requestAnimationFrame(cameraRender);
   }
 
-  requestAnimationFrame(cameraRender);
+  document.body.addEventListener('keyup', (e) => {
+    if (e.code === 'ShiftLeft') {
+      cameraState.shift = false;
+    }
+    if (e.code === 'Space') {
+      cameraState.hasCameraEnabled = !cameraState.hasCameraEnabled;
+      if (cameraState.hasCameraEnabled) {
+        document.body.removeEventListener('mousemove', mouseMoveHandler);
+        window.render = false;
+      } else {
+        document.body.addEventListener('mousemove', mouseMoveHandler);
+        window.render = true;
+        requestAnimationFrame(cameraRender);
+      }
+    }
+  });
 }

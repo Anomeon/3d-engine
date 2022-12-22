@@ -2,7 +2,13 @@ import { MathExt } from "./MathExt";
 import { Point } from "./Point";
 
 export class Line {
-  constructor(private startX: number, private startY: number, private endX: number, private endY: number, private color: string = '#fff') {
+  constructor(
+    private startX: number,
+    private startY: number,
+    private endX: number,
+    private endY: number,
+    private color: string = '#fff'
+  ) {
     this.startX = MathExt.round(startX, 0);
     this.startY = MathExt.round(startY, 0);
     this.endX = MathExt.round(endX, 0);
