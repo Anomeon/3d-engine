@@ -11,6 +11,10 @@ export class Vector {
     return new Vector(this.x - vector.x, this.y - vector.y, this.z - vector.z);
   }
 
+  multiplyVectorToScalar(k: number) {
+    return new Vector(this.x * k, this.y * k, this.z * k);
+  }
+
   crossProduct(vector: Vector) {
     const x = this.y * vector.z - this.z * vector.y;
     const y = this.z * vector.x - this.x * vector.z;

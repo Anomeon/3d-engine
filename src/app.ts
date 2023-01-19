@@ -41,6 +41,7 @@ const canvas = document.querySelector('canvas');
 const ctx = canvas?.getContext('2d');
 
 let cameraState = {x: 0, y: 0, z: 0, xy: 0, xz: 0, yz: 0, shift: false, hasCameraEnabled: true };
+let player = { yaw: 0 };
 
 document.body.addEventListener('keydown', (e) => {
   if (e.code === 'ShiftLeft') {
@@ -84,11 +85,15 @@ document.querySelector('#stop-render')?.addEventListener('click', () => {
   window.render = false;
 });
 
+let vLookDir;
+
 if (canvas && ctx) {
   ctx.fillStyle = '#fff';
 
   new Drawer(ctx);
   const camera = new Camera(0, canvas?.width, 0, canvas?.height);
+  let vCamera = new Vector(camera.minX, camera.minY, camera.minZ);
+
   const { points, indexes } = readObjFile();
 
   const cameraRender = (timestamp) => {
@@ -96,6 +101,40 @@ if (canvas && ctx) {
 
     let vectors: Array<[Vector, Vector, Vector, number]> = [];
     let dotProductForLight;
+
+    // let vLookDir = new Vector(0, 0, 1)
+    let vUp = new Vector(0, 1, 0);
+    // let vTarget = vCamera.addVectorToVector(vLookDir);
+    let vTarget = new Vector(0, 0, 1);
+
+    vLookDir = vTarget.rotateXZ(player.yaw);
+    vTarget = vCamera.addVectorToVector(vLookDir);
+    let newForward = vTarget.subtractVectorFromVector(vCamera).unitVector();
+
+    let a = newForward.multiplyVectorToScalar(vUp.dotProduct(newForward));
+    let newUp = vUp.subtractVectorFromVector(a).unitVector();
+
+    let newRight = newUp.crossProduct(newForward);
+
+    const matCamera = [
+      [newRight.x,   newRight.y,   newRight.z,   0],
+      [newUp.x,      newUp.y,      newUp.z,      0],
+      [newForward.x, newForward.y, newForward.z, 0],
+      [vCamera.x,    vCamera.y,    vCamera.z,    1],
+    ];
+
+    const matView = [
+      [newRight.x, newUp.x, newForward.x, 0],
+      [newRight.y, newUp.y, newForward.y, 0],
+      [newRight.z, newUp.z, newForward.z, 0],
+      [
+        vCamera.x * newRight.x   + vCamera.y * newRight.y   + vCamera.z * newRight.z,
+        vCamera.x * newUp.x      + vCamera.y * newUp.y      + vCamera.z * newUp.z,
+        vCamera.x * newForward.x + vCamera.y * newForward.y + vCamera.z * newForward.z,
+        1,
+      ],
+    ];
+
     // Draw triangles
     for (let i = 0; i < indexes.length; i++) {
 
@@ -104,17 +143,17 @@ if (canvas && ctx) {
       let v3 = new Vector(+points[+indexes[i][2] - 1][0], +points[+indexes[i][2] - 1][1], +points[+indexes[i][2] - 1][2]);
 
       // Rotate on tick
-      v1 = v1.rotateYZ(MathExt.round(timestamp / 15 % 360));
-      v2 = v2.rotateYZ(MathExt.round(timestamp / 15 % 360));
-      v3 = v3.rotateYZ(MathExt.round(timestamp / 15 % 360));
+      // v1 = v1.rotateYZ(MathExt.round(timestamp / 15 % 360));
+      // v2 = v2.rotateYZ(MathExt.round(timestamp / 15 % 360));
+      // v3 = v3.rotateYZ(MathExt.round(timestamp / 15 % 360));
 
-      v1 = v1.rotateXY(MathExt.round(timestamp / 15 % 360));
-      v2 = v2.rotateXY(MathExt.round(timestamp / 15 % 360));
-      v3 = v3.rotateXY(MathExt.round(timestamp / 15 % 360));
+      // v1 = v1.rotateXY(MathExt.round(timestamp / 15 % 360));
+      // v2 = v2.rotateXY(MathExt.round(timestamp / 15 % 360));
+      // v3 = v3.rotateXY(MathExt.round(timestamp / 15 % 360));
 
-      v1 = v1.rotateXZ(MathExt.round(timestamp / 15 % 360));
-      v2 = v2.rotateXZ(MathExt.round(timestamp / 15 % 360));
-      v3 = v3.rotateXZ(MathExt.round(timestamp / 15 % 360));
+      // v1 = v1.rotateXZ(MathExt.round(timestamp / 15 % 360));
+      // v2 = v2.rotateXZ(MathExt.round(timestamp / 15 % 360));
+      // v3 = v3.rotateXZ(MathExt.round(timestamp / 15 % 360));
 
       // Fixed rotation
       // v1 = v1.rotateXZ(MathExt.round(35));
@@ -148,14 +187,18 @@ if (canvas && ctx) {
       const unitNormal = normal.unitVector();
 
       // Exclude from render internal side
-      if (unitNormal.dotProduct(v1.subtractVectorFromVector(new Vector(camera.minX, camera.minY, camera.minZ))) < 0) {
+      if (unitNormal.dotProduct(v1.subtractVectorFromVector(vCamera)) < 0) {
 
         const lightDirectionNormal = new Vector(0, 0, -1).unitVector();
         dotProductForLight = unitNormal.dotProduct(lightDirectionNormal);
 
-        const projectedV1 = MathExt.multiplyVectorToMatrix(v1, camera.projectionMatrix);
-        const projectedV2 = MathExt.multiplyVectorToMatrix(v2, camera.projectionMatrix);
-        const projectedV3 = MathExt.multiplyVectorToMatrix(v3, camera.projectionMatrix);
+        const viewedV1 = MathExt.multiplyVectorToMatrix(v1, matView);
+        const viewedV2 = MathExt.multiplyVectorToMatrix(v2, matView);
+        const viewedV3 = MathExt.multiplyVectorToMatrix(v3, matView);
+
+        const projectedV1 = MathExt.multiplyVectorToMatrix(viewedV1, camera.projectionMatrix);
+        const projectedV2 = MathExt.multiplyVectorToMatrix(viewedV2, camera.projectionMatrix);
+        const projectedV3 = MathExt.multiplyVectorToMatrix(viewedV3, camera.projectionMatrix);
 
         vectors.push([projectedV1, projectedV2, projectedV3, dotProductForLight]);
       }
@@ -189,7 +232,7 @@ if (canvas && ctx) {
     requestAnimationFrame(cameraRender);
   }
 
-  document.body.addEventListener('keyup', (e) => {
+  document.body.addEventListener('keydown', (e) => {
     if (e.code === 'ShiftLeft') {
       cameraState.shift = false;
     }
@@ -203,6 +246,33 @@ if (canvas && ctx) {
         window.render = true;
         requestAnimationFrame(cameraRender);
       }
+    }
+    if (e.code === 'KeyD') {
+      vCamera = new Vector(vCamera.x - 0.1, vCamera.y, vCamera.z);
+    }
+    if (e.code === 'KeyA') {
+      vCamera = new Vector(vCamera.x + 0.1, vCamera.y, vCamera.z);
+    }
+    const vForward = vLookDir.multiplyVectorToScalar(0.1);
+    if (e.code === 'KeyW') {
+      vCamera = vCamera.subtractVectorFromVector(vForward);
+      // vCamera = new Vector(vCamera.x, vCamera.y, vCamera.z - 0.5);
+    }
+    if (e.code === 'KeyS') {
+      vCamera = vCamera.addVectorToVector(vForward);
+      // vCamera = new Vector(vCamera.x, vCamera.y, vCamera.z + 0.5);
+    }
+    if (e.code === 'ArrowUp') {
+      vCamera = new Vector(vCamera.x, vCamera.y - 0.1, vCamera.z);
+    }
+    if (e.code === 'ArrowDown') {
+      vCamera = new Vector(vCamera.x, vCamera.y + 0.1, vCamera.z);
+    }
+    if (e.code === 'ArrowLeft') {
+      player.yaw -= 2;
+    }
+    if (e.code === 'ArrowRight') {
+      player.yaw += 2;
     }
   });
 }
