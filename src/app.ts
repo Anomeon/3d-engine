@@ -16,10 +16,10 @@ let SHIFT_FROM_Z;
 const readObjFile = () => {
   // const sourceCode = fs.readFileSync(__dirname + '/models/boxes.obj', 'utf8');
   // SHIFT_FROM_Z = 12;
-  // const sourceCode = fs.readFileSync(__dirname + '/models/cube.obj', 'utf8');
-  // SHIFT_FROM_Z = 3;
-  const sourceCode = fs.readFileSync(__dirname + '/models/spaceship.obj', 'utf8');
-  SHIFT_FROM_Z = 8;
+  const sourceCode = fs.readFileSync(__dirname + '/models/cube.obj', 'utf8');
+  SHIFT_FROM_Z = 3;
+  // const sourceCode = fs.readFileSync(__dirname + '/models/spaceship.obj', 'utf8');
+  // SHIFT_FROM_Z = 8;
   const splitted: string[] = sourceCode.split('\n');
   const points: RegExpMatchArray[][] = [];
   const indexes: RegExpMatchArray[][] = [];
@@ -86,6 +86,92 @@ document.querySelector('#stop-render')?.addEventListener('click', () => {
 });
 
 let vLookDir;
+
+const intersectPlane = (planeP: Vector, planeN: Vector, lineStart: Vector, lineEnd: Vector) => {
+  const planeNnormalized = planeN.unitVector();
+  const planeD = -planeNnormalized.dotProduct(planeP);
+  const ad = lineStart.dotProduct(planeD);
+  const bd = lineEnd.dotProduct(planeD);
+  const t = (-planeD - ad) / (bd - ad);
+  const lineStartToEnd = lineEnd.subtractVectorFromVector(lineStart);
+  const lineToIntersect = lineStartToEnd.multiplyVectorToScalar(t);
+  return lineStart.addVectorToVector(lineToIntersect);
+};
+
+const getDist = (planeNnormalized: Vector, p: Vector, planeP: Vector) => {
+  return planeNnormalized.dotProduct(p) - planeNnormalized.dotProduct(planeP);
+}
+
+const getAdditionalVectorsIfRequiredBecauseOfClipping = (planeP: Vector, planeN: Vector, v1: Vector, v2: Vector, v3: Vector) => {
+  let nInsidePointCount = 0;
+  let nOutsidePointCount = 0;
+  const insidePoints = [];
+  const outsidePoints = [];
+
+  const planeNnormalized = planeN.unitVector();
+
+  const d1 = getDist(planeNnormalized, v1, planeP)
+  const d2 = getDist(planeNnormalized, v2, planeP)
+  const d3 = getDist(planeNnormalized, v3, planeP)
+
+  if (d1 >= 0) {
+    nInsidePointCount++;
+    insidePoints.push(v1);
+  } else {
+    nOutsidePointCount++;
+    outsidePoints.push(v1);
+  }
+
+  if (d2 >= 0) {
+    nInsidePointCount++;
+    insidePoints.push(v2);
+  } else {
+    nOutsidePointCount++;
+    outsidePoints.push(v2);
+  }
+
+  if (d3 >= 0) {
+    nInsidePointCount++;
+    insidePoints.push(v3);
+  } else {
+    nOutsidePointCount++;
+    outsidePoints.push(v3);
+  }
+
+  console.log(nInsidePointCount);
+
+  if (nInsidePointCount === 0) {
+    return [];
+  }
+
+  if (nInsidePointCount === 3) {
+    return [v1, v2, v3];
+  }
+
+  if (nInsidePointCount === 1 && nOutsidePointCount === 2) {
+    return [
+      insidePoints[0],
+      intersectPlane(planeP, planeN, insidePoints[0], outsidePoints[0]),
+      intersectPlane(planeP, planeN, insidePoints[0], outsidePoints[1]),
+    ];
+  }
+
+  if (nInsidePointCount === 2 && nOutsidePointCount === 1) {
+    const newV = intersectPlane(planeP, planeN, insidePoints[0], outsidePoints[0]);
+    return [
+      insidePoints[0],
+      insidePoints[1],
+      newV,
+
+      insidePoints[1],
+      newV,
+      intersectPlane(planeP, planeN, insidePoints[1], outsidePoints[0]),
+    ];
+  }
+
+  return [];
+
+}
 
 if (canvas && ctx) {
   ctx.fillStyle = '#fff';
@@ -196,11 +282,15 @@ if (canvas && ctx) {
         const viewedV2 = MathExt.multiplyVectorToMatrix(v2, matView);
         const viewedV3 = MathExt.multiplyVectorToMatrix(v3, matView);
 
-        const projectedV1 = MathExt.multiplyVectorToMatrix(viewedV1, camera.projectionMatrix);
-        const projectedV2 = MathExt.multiplyVectorToMatrix(viewedV2, camera.projectionMatrix);
-        const projectedV3 = MathExt.multiplyVectorToMatrix(viewedV3, camera.projectionMatrix);
+        const newVectors = getAdditionalVectorsIfRequiredBecauseOfClipping(new Vector(0, 0, 0.1), new Vector(0, 0, 1), viewedV1, viewedV2, viewedV3);
 
-        vectors.push([projectedV1, projectedV2, projectedV3, dotProductForLight]);
+        for (let j = 0; j < newVectors.length; j+=3) {
+          const projectedV1 = MathExt.multiplyVectorToMatrix(newVectors[j], camera.projectionMatrix);
+          const projectedV2 = MathExt.multiplyVectorToMatrix(newVectors[j+1], camera.projectionMatrix);
+          const projectedV3 = MathExt.multiplyVectorToMatrix(newVectors[j+2], camera.projectionMatrix);
+
+          vectors.push([projectedV1, projectedV2, projectedV3, dotProductForLight]);
+        }
       }
     }
     vectors.sort((a, b) => { return (b[0].z + b[1].z + b[2].z) / 3 - (a[0].z + a[1].z + a[2].z) / 3})
