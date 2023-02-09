@@ -61,7 +61,7 @@ const canvas = document.querySelector('canvas');
 const ctx = canvas?.getContext('2d');
 
 let cameraState = {x: 0, y: 0, z: 0, xy: 0, xz: 0, yz: 0, shift: false, hasCameraEnabled: true };
-let player = { yaw: 0 };
+let player = { yawX: 0, yawY: 0 };
 
 document.body.addEventListener('keydown', (e) => {
   if (e.code === 'ShiftLeft') {
@@ -71,29 +71,43 @@ document.body.addEventListener('keydown', (e) => {
 });
 
 const mouseMoveHandler = (e) => {
-  if (cameraState.x < e.clientX) {
-    cameraState.xy += 1 % 360;
-  } else if (cameraState.x > e.clientX) {
-    cameraState.xy -= 1 % 360;
+  if (cameraState.x === 0) {
+    cameraState.x = e.clientX;
   }
-
-  if (cameraState.shift) {
-    if (cameraState.z < e.clientY) {
-      cameraState.xz += 1 % 360;
-    } else if (cameraState.z > e.clientY) {
-      cameraState.xz -= 1 % 360;
-    }
-    cameraState.z = e.clientY;
-  } else {
-    if (cameraState.y < e.clientY) {
-      cameraState.yz += 1 % 360;
-    } else if (cameraState.y > e.clientY) {
-      cameraState.yz -= 1 % 360;
-    }
+  if (cameraState.y === 0) {
     cameraState.y = e.clientY;
-  }
-
+    }
+  const diffX = (cameraState.x - e.clientX) / 2;
+  player.yawX += diffX;
   cameraState.x = e.clientX;
+
+  const diffY = (cameraState.y - e.clientY) / 2;
+  player.yawY -= diffY;
+    cameraState.y = e.clientY;
+
+  // if (cameraState.x < e.clientX) {
+  //   cameraState.xy += 1 % 360;
+  // } else if (cameraState.x > e.clientX) {
+  //   cameraState.xy -= 1 % 360;
+  // }
+
+  // if (cameraState.shift) {
+  //   if (cameraState.z < e.clientY) {
+  //     cameraState.xz += 1 % 360;
+  //   } else if (cameraState.z > e.clientY) {
+  //     cameraState.xz -= 1 % 360;
+  //   }
+  //   cameraState.z = e.clientY;
+  // } else {
+  //   if (cameraState.y < e.clientY) {
+  //     cameraState.yz += 1 % 360;
+  //   } else if (cameraState.y > e.clientY) {
+  //     cameraState.yz -= 1 % 360;
+  //   }
+  //   cameraState.y = e.clientY;
+  // }
+
+  // cameraState.x = e.clientX;
 };
 
 document.body.addEventListener('mousemove', mouseMoveHandler);
@@ -213,7 +227,8 @@ if (canvas && ctx) {
     // let vTarget = vCamera.addVectorToVector(vLookDir);
     let vTarget = new Vector(0, 0, 1);
 
-    vLookDir = vTarget.rotateXZ(player.yaw);
+    vLookDir = vTarget.rotateXZ(player.yawX);
+    vLookDir = vLookDir.rotateYZ(player.yawY);
     vTarget = vCamera.addVectorToVector(vLookDir);
     let newForward = vTarget.subtractVectorFromVector(vCamera).unitVector();
 
@@ -382,19 +397,19 @@ if (canvas && ctx) {
       }
     }
     if (e.code === 'KeyD') {
-      vCamera = new Vector(vCamera.x - 0.1, vCamera.y, vCamera.z);
+      vCamera = new Vector(vCamera.x + 0.1, vCamera.y, vCamera.z);
     }
     if (e.code === 'KeyA') {
-      vCamera = new Vector(vCamera.x + 0.1, vCamera.y, vCamera.z);
+      vCamera = new Vector(vCamera.x - 0.1, vCamera.y, vCamera.z);
     }
     const vForward = vLookDir.multiplyVectorToScalar(0.1);
     if (e.code === 'KeyW') {
-      vCamera = vCamera.subtractVectorFromVector(vForward);
-      // vCamera = new Vector(vCamera.x, vCamera.y, vCamera.z - 0.5);
-    }
-    if (e.code === 'KeyS') {
       vCamera = vCamera.addVectorToVector(vForward);
       // vCamera = new Vector(vCamera.x, vCamera.y, vCamera.z + 0.5);
+    }
+    if (e.code === 'KeyS') {
+      vCamera = vCamera.subtractVectorFromVector(vForward);
+      // vCamera = new Vector(vCamera.x, vCamera.y, vCamera.z - 0.5);
     }
     if (e.code === 'ArrowUp') {
       vCamera = new Vector(vCamera.x, vCamera.y - 0.1, vCamera.z);
@@ -403,10 +418,10 @@ if (canvas && ctx) {
       vCamera = new Vector(vCamera.x, vCamera.y + 0.1, vCamera.z);
     }
     if (e.code === 'ArrowLeft') {
-      player.yaw -= 2;
+      player.yawX -= 2;
     }
     if (e.code === 'ArrowRight') {
-      player.yaw += 2;
+      player.yawX += 2;
     }
   });
 }
