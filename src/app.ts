@@ -285,9 +285,13 @@ if (canvas && ctx) {
         const newVectors = getAdditionalVectorsIfRequiredBecauseOfClipping(new Vector(0, 0, 0.1), new Vector(0, 0, 1), viewedV1, viewedV2, viewedV3);
 
         for (let j = 0; j < newVectors.length; j+=3) {
-          let projectedV1 = MathExt.multiplyVectorToMatrixWithDividing(newVectors[j], camera.projectionMatrix);
-          let projectedV2 = MathExt.multiplyVectorToMatrixWithDividing(newVectors[j+1], camera.projectionMatrix);
-          let projectedV3 = MathExt.multiplyVectorToMatrixWithDividing(newVectors[j+2], camera.projectionMatrix);
+          let projectedV1 = MathExt.multiplyVectorToMatrix(newVectors[j], camera.projectionMatrix);
+          let projectedV2 = MathExt.multiplyVectorToMatrix(newVectors[j+1], camera.projectionMatrix);
+          let projectedV3 = MathExt.multiplyVectorToMatrix(newVectors[j+2], camera.projectionMatrix);
+
+          projectedV1 = projectedV1.divideVectorToScalar(projectedV1.w);
+          projectedV2 = projectedV2.divideVectorToScalar(projectedV2.w);
+          projectedV3 = projectedV3.divideVectorToScalar(projectedV3.w);
 
           projectedV1.x *= -1;
           projectedV1.y *= -1;

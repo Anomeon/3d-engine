@@ -1,7 +1,13 @@
 import { Matrix3x3, MathExt } from "./MathExt";
 
 export class Vector {
-  constructor(public x: number, public y: number, public z: number) {}
+  constructor(
+    public x: number,
+    public y: number,
+    public z: number,
+    // For multiplication with 4x4 matrix
+    public w: number = 1,
+  ) {}
 
   addVectorToVector(vector: Vector) {
     return new Vector(this.x + vector.x, this.y + vector.y, this.z + vector.z);
@@ -13,6 +19,11 @@ export class Vector {
 
   multiplyVectorToScalar(k: number) {
     return new Vector(this.x * k, this.y * k, this.z * k);
+  }
+
+  divideVectorToScalar(k: number) {
+    // Don't use rounding, because z becomes to round — it breaks sorting by z axis
+    return new Vector(this.x / k, this.y / k, this.z / k);
   }
 
   crossProduct(vector: Vector) {
@@ -32,7 +43,7 @@ export class Vector {
     if (length === 0) {
       return new Vector(0, 0, 0);
     }
-    return new Vector(this.x / length, this.y / length, this.z / length);
+    return this.divideVectorToScalar(length);
   }
 
   length() {

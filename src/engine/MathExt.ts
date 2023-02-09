@@ -21,19 +21,13 @@ export class MathExt {
     return newMatrix1xN;
   }
 
-  // here is multiply vector to matrix. Vector is horizontal matrix [x, y, z], this is why multiply is different than in multiplyMatrix method
-  // firstly multiplying column
   static multiplyVectorToMatrix(v: Vector, m: Matrix4x4) {
-    const x = MathExt.round(v.x * m[0][0] + v.y * m[1][0] + v.z * m[2][0] + m[3][0]);
-    const y = MathExt.round(v.x * m[0][1] + v.y * m[1][1] + v.z * m[2][1] + m[3][1]);
-    const z = MathExt.round(v.x * m[0][2] + v.y * m[1][2] + v.z * m[2][2] + m[3][2]);
-    const w = MathExt.round(v.x * m[0][3] + v.y * m[1][3] + v.z * m[2][3] + m[3][3]);
+    const x = MathExt.round(v.x * m[0][0] + v.y * m[1][0] + v.z * m[2][0] + v.w * m[3][0]);
+    const y = MathExt.round(v.x * m[0][1] + v.y * m[1][1] + v.z * m[2][1] + v.w * m[3][1]);
+    const z = MathExt.round(v.x * m[0][2] + v.y * m[1][2] + v.z * m[2][2] + v.w * m[3][2]);
+    const w = MathExt.round(v.x * m[0][3] + v.y * m[1][3] + v.z * m[2][3] + v.w * m[3][3]);
 
-    if (w === 0) {
-      return new Vector(x, y, z);
-    }
-    // Don't use round if possible (or use not default rounding) => breaks sorting by z axis
-    return new Vector(x / w, y / w, z / w);
+    return new Vector(x, y, z, w);
   }
 
   static random(min: number, max: number) {
