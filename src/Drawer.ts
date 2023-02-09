@@ -9,7 +9,7 @@ export class Drawer {
 
   draw(x: number, y: number, width: number, height: number) {
     // TODO
-    Drawer.instance?.fillRect(x, 600 - y, width, height);
+    Drawer.instance?.fillRect(x, 400 - y, width, height);
   }
 
   color(color: string) {

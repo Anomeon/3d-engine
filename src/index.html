@@ -7,20 +7,20 @@
   <title>3d engine</title>
   <style>
     body {
+      display: flex;
       margin: 0;
       background-color: #000;
+      height: 100vh;
     }
     canvas {
       display: block;
-      margin: 64px auto 0;
-      border: 1px solid #fff;
+      margin: auto;
+      outline: auto;
     }
   </style>
 </head>
 <body>
-  <button id="run-render">run</button>
-  <button id="stop-render">stop</button>
-  <canvas id="canvas" width="600" height="600"></canvas>
+  <canvas id="canvas" width="600" height="500"></canvas>
   <script src="app.ts" type="module"></script>
 </body>
 </html>

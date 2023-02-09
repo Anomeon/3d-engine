@@ -29,6 +29,8 @@ const COLORS = [
   'olive',
 ];
 
+const SCALE_FACTOR = 1;
+
 const readObjFile = () => {
   // const sourceCode = fs.readFileSync(__dirname + '/models/boxes.obj', 'utf8');
   // SHIFT_FROM_Z = 12;
@@ -61,6 +63,9 @@ const canvas = document.querySelector('canvas');
 const ctx = canvas?.getContext('2d');
 
 let cameraState = {x: 0, y: 0, z: 0, xy: 0, xz: 0, yz: 0, shift: false, hasCameraEnabled: true };
+const APP_STATE = {
+  isFullscreen: false,
+};
 let player = { yawX: 0, yawY: 0 };
 
 document.body.addEventListener('keydown', (e) => {
@@ -112,11 +117,29 @@ const mouseMoveHandler = (e) => {
 
 document.body.addEventListener('mousemove', mouseMoveHandler);
 
-document.querySelector('#run-render')?.addEventListener('click', () => {
-  window.render = true;
-});
-document.querySelector('#stop-render')?.addEventListener('click', () => {
-  window.render = false;
+const toggleFullscreen = () => {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen();
+  } else {
+    document.exitFullscreen();
+  }
+};
+
+document.addEventListener('fullscreenchange', (e) => {
+  setTimeout(() => {
+    const canvas = document.querySelector('#canvas');
+    const ctx = canvas.getContext('2d');
+    if (document.fullscreenElement) {
+      canvas.height = window.innerHeight;
+      canvas.width = window.innerWidth;
+      ctx.scale(SCALE_FACTOR, SCALE_FACTOR);
+    } else {
+      canvas.height = 500;
+      canvas.width = 600;
+      ctx.scale(1, 1);
+    }
+    APP_STATE.isFullscreen = !!document.fullscreenElement;
+  }, 1000);
 });
 
 let vLookDir;
@@ -171,8 +194,6 @@ const getAdditionalVectorsIfRequiredBecauseOfClipping = (planeP: Vector, planeN:
     nOutsidePointCount++;
     outsidePoints.push(v3);
   }
-
-  console.log(nInsidePointCount);
 
   if (nInsidePointCount === 0) {
     return [];
@@ -382,6 +403,12 @@ if (canvas && ctx) {
   }
 
   document.body.addEventListener('keydown', (e) => {
+    if (e.code === 'BracketLeft') {
+      window.render = true;
+    }
+    if (e.code === 'BracketRight') {
+      window.render = false;
+    }
     if (e.code === 'ShiftLeft') {
       cameraState.shift = false;
     }
@@ -396,6 +423,11 @@ if (canvas && ctx) {
         requestAnimationFrame(cameraRender);
       }
     }
+
+    if (e.code === 'KeyF') {
+      toggleFullscreen();
+    }
+
     if (e.code === 'KeyD') {
       vCamera = new Vector(vCamera.x + 0.1, vCamera.y, vCamera.z);
     }
