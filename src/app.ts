@@ -214,9 +214,9 @@ if (canvas && ctx) {
       [newRight.y, newUp.y, newForward.y, 0],
       [newRight.z, newUp.z, newForward.z, 0],
       [
-        vCamera.x * newRight.x   + vCamera.y * newRight.y   + vCamera.z * newRight.z,
-        vCamera.x * newUp.x      + vCamera.y * newUp.y      + vCamera.z * newUp.z,
-        vCamera.x * newForward.x + vCamera.y * newForward.y + vCamera.z * newForward.z,
+        -(vCamera.x * newRight.x   + vCamera.y * newRight.y   + vCamera.z * newRight.z),
+        -(vCamera.x * newUp.x      + vCamera.y * newUp.y      + vCamera.z * newUp.z),
+        -(vCamera.x * newForward.x + vCamera.y * newForward.y + vCamera.z * newForward.z),
         1,
       ],
     ];
@@ -276,7 +276,7 @@ if (canvas && ctx) {
       if (unitNormal.dotProduct(v1.subtractVectorFromVector(vCamera)) < 0) {
 
         const lightDirectionNormal = new Vector(0, 0, -1).unitVector();
-        dotProductForLight = unitNormal.dotProduct(lightDirectionNormal);
+        dotProductForLight = Math.max(0.3, unitNormal.dotProduct(lightDirectionNormal));
 
         const viewedV1 = MathExt.multiplyVectorToMatrix(v1, matView);
         const viewedV2 = MathExt.multiplyVectorToMatrix(v2, matView);
@@ -285,9 +285,16 @@ if (canvas && ctx) {
         const newVectors = getAdditionalVectorsIfRequiredBecauseOfClipping(new Vector(0, 0, 0.1), new Vector(0, 0, 1), viewedV1, viewedV2, viewedV3);
 
         for (let j = 0; j < newVectors.length; j+=3) {
-          const projectedV1 = MathExt.multiplyVectorToMatrix(newVectors[j], camera.projectionMatrix);
-          const projectedV2 = MathExt.multiplyVectorToMatrix(newVectors[j+1], camera.projectionMatrix);
-          const projectedV3 = MathExt.multiplyVectorToMatrix(newVectors[j+2], camera.projectionMatrix);
+          let projectedV1 = MathExt.multiplyVectorToMatrixWithDividing(newVectors[j], camera.projectionMatrix);
+          let projectedV2 = MathExt.multiplyVectorToMatrixWithDividing(newVectors[j+1], camera.projectionMatrix);
+          let projectedV3 = MathExt.multiplyVectorToMatrixWithDividing(newVectors[j+2], camera.projectionMatrix);
+
+          projectedV1.x *= -1;
+          projectedV1.y *= -1;
+          projectedV2.x *= -1;
+          projectedV2.y *= -1;
+          projectedV3.x *= -1;
+          projectedV3.y *= -1;
 
           vectors.push([projectedV1, projectedV2, projectedV3, dotProductForLight]);
         }
