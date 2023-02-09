@@ -90,8 +90,8 @@ let vLookDir;
 const intersectPlane = (planeP: Vector, planeN: Vector, lineStart: Vector, lineEnd: Vector) => {
   const planeNnormalized = planeN.unitVector();
   const planeD = -planeNnormalized.dotProduct(planeP);
-  const ad = lineStart.dotProduct(planeD);
-  const bd = lineEnd.dotProduct(planeD);
+  const ad = lineStart.dotProduct(planeNnormalized);
+  const bd = lineEnd.dotProduct(planeNnormalized);
   const t = (-planeD - ad) / (bd - ad);
   const lineStartToEnd = lineEnd.subtractVectorFromVector(lineStart);
   const lineToIntersect = lineStartToEnd.multiplyVectorToScalar(t);
