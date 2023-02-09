@@ -4,6 +4,7 @@ import { Vector } from './engine/Vector';
 import { Camera } from './engine/Camera';
 import { Line } from './engine/Line';
 import { Triangle } from './engine/Triangle';
+import { TriangleFast } from './engine/TriangleFast';
 import { Polygon } from './engine/Polygon';
 import { MathExt } from './engine/MathExt';
 import fs from 'fs';
@@ -13,13 +14,32 @@ window.render = true;
 
 let SHIFT_FROM_Z;
 
+const COLORS = [
+  'red',
+  'green',
+  'gray',
+  'yellow',
+  'blue',
+  'pink',
+  'tomato',
+  'purple',
+  'orange',
+  'magenta',
+  'darkblue',
+  'olive',
+];
+
 const readObjFile = () => {
   // const sourceCode = fs.readFileSync(__dirname + '/models/boxes.obj', 'utf8');
   // SHIFT_FROM_Z = 12;
-  const sourceCode = fs.readFileSync(__dirname + '/models/cube.obj', 'utf8');
-  SHIFT_FROM_Z = 3;
+  // const sourceCode = fs.readFileSync(__dirname + '/models/cube.obj', 'utf8');
+  // SHIFT_FROM_Z = 3;
   // const sourceCode = fs.readFileSync(__dirname + '/models/spaceship.obj', 'utf8');
   // SHIFT_FROM_Z = 8;
+  // const sourceCode = fs.readFileSync(__dirname + '/models/threeboxes.obj', 'utf8');
+  // SHIFT_FROM_Z = 3;
+  const sourceCode = fs.readFileSync(__dirname + '/models/awoken.obj', 'utf8');
+  SHIFT_FROM_Z = 12;
   const splitted: string[] = sourceCode.split('\n');
   const points: RegExpMatchArray[][] = [];
   const indexes: RegExpMatchArray[][] = [];
@@ -325,13 +345,17 @@ if (canvas && ctx) {
       // const fillColor = i < 16 ? coords[3] : undefined;
 
       // const lineColor = `#fff`;
-      // const fillColor = `#fff`;
+      // const fillColor = `rgba(255,255,255,0.4)`;
 
       const lineColor = `hsl(0, 0%, ${vectors[i][3] * 100}%)`;
       const fillColor = `hsl(0, 0%, ${vectors[i][3] * 100}%)`;
-      const triangle = new Triangle(vectors[i][0].x, vectors[i][0].y, vectors[i][1].x, vectors[i][1].y, vectors[i][2].x, vectors[i][2].y, lineColor, fillColor);
 
-      camera.drawScene(triangle.getPoints());
+      // const lineColor = `${COLORS[i % 12]}`;
+      // const fillColor = `${COLORS[i % 12]}`;
+      const triangle = new Triangle(vectors[i][0].x, vectors[i][0].y, vectors[i][1].x, vectors[i][1].y, vectors[i][2].x, vectors[i][2].y, lineColor, fillColor);
+      // camera.drawScene(triangle.getPoints());
+
+      new TriangleFast(vectors[i][0].x, vectors[i][0].y, vectors[i][1].x, vectors[i][1].y, vectors[i][2].x, vectors[i][2].y, lineColor, fillColor).draw();
     }
     if (window.render) {
       requestAnimationFrame(cameraRender);
