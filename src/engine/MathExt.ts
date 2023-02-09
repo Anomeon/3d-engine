@@ -32,7 +32,8 @@ export class MathExt {
     if (w === 0) {
       return new Vector(x, y, z);
     }
-    return new Vector(MathExt.round(x / w), MathExt.round(y / w), MathExt.round(z / w));
+    // Don't use round if possible (or use not default rounding) => breaks sorting by z axis
+    return new Vector(x / w, y / w, z / w);
   }
 
   static random(min: number, max: number) {

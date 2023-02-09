@@ -296,17 +296,26 @@ if (canvas && ctx) {
           projectedV3.x *= -1;
           projectedV3.y *= -1;
 
+          const kx = canvas.width * 0.5;
+          const ky = canvas.height * 0.5;
+          const x = 1;
+          const y = 1;
+
+          projectedV1.x = (projectedV1.x + x) * kx;
+          projectedV1.y = (projectedV1.y + y) * ky;
+          projectedV2.x = (projectedV2.x + x) * kx;
+          projectedV2.y = (projectedV2.y + y) * ky;
+          projectedV3.x = (projectedV3.x + x) * kx;
+          projectedV3.y = (projectedV3.y + y) * ky;
+
           vectors.push([projectedV1, projectedV2, projectedV3, dotProductForLight]);
         }
       }
     }
+
     vectors.sort((a, b) => { return (b[0].z + b[1].z + b[2].z) / 3 - (a[0].z + a[1].z + a[2].z) / 3})
 
     for (let i = 0; i < vectors.length; i++) {
-      const kx = canvas.width * 0.5;
-      const ky = canvas.height * 0.5;
-      const x = 1;
-      const y = 1;
 
       // const lineColor = coords[3];
       // const fillColor = i < 16 ? coords[3] : undefined;
@@ -316,7 +325,7 @@ if (canvas && ctx) {
 
       const lineColor = `hsl(0, 0%, ${vectors[i][3] * 100}%)`;
       const fillColor = `hsl(0, 0%, ${vectors[i][3] * 100}%)`;
-      const triangle = new Triangle((vectors[i][0].x + x) * kx, (vectors[i][0].y + y) * ky, (vectors[i][1].x + x) * kx, (vectors[i][1].y + y) * ky, (vectors[i][2].x + x) * kx, (vectors[i][2].y + y) * ky, lineColor, fillColor);
+      const triangle = new Triangle(vectors[i][0].x, vectors[i][0].y, vectors[i][1].x, vectors[i][1].y, vectors[i][2].x, vectors[i][2].y, lineColor, fillColor);
 
       camera.drawScene(triangle.getPoints());
     }
