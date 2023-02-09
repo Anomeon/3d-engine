@@ -30,7 +30,7 @@ export class Line {
     let y = this.startY;
 
     let i = 0;
-    points.push(new Point(x, y, 1));
+    points.push(new Point(x, y, 1, this.color));
     while (!((x === this.endX) && (y === this.endY))) {
       // TODO remove
       i++;
